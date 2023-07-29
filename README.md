@@ -1,6 +1,6 @@
-# Spektra
+# Spektra 3D
 
-Real-time audio visualizer made using [miniaudio](https://github.com/mackron/miniaudio), [Imgui](https://github.com/ocornut/imgui), [IIR1](https://github.com/berndporr/iir1) and [Implot](https://github.com/epezent/implot) libraries. 
+Real-time 3D audio visualizer made using [miniaudio](https://github.com/mackron/miniaudio), [Imgui](https://github.com/ocornut/imgui), [IIR1](https://github.com/berndporr/iir1) and [Implot](https://github.com/epezent/implot) libraries. Rendered using OpenGL graphics API.
 
 Audio analysis is achieved using bandpass filters to perform fractional-octave analysis which is then processed and displayed to make pleasing visuals in real-time.
 
