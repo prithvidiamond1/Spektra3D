@@ -148,8 +148,10 @@
     <ClCompile Include="src\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\ALB.cpp" />
+    <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\miniaudio_init.c" />
     <ClCompile Include="src\Octave.cpp" />
+    <ClCompile Include="src\Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\App.h" />
@@ -157,12 +159,16 @@
     <ClInclude Include="src\imgui_impl_glfw.h" />
     <ClInclude Include="src\imgui_impl_opengl3.h" />
     <ClInclude Include="src\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\miniaudio.h" />
     <ClInclude Include="src\Octave.h" />
+    <ClInclude Include="src\Shader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="README.md" />
+    <None Include="src\shaders\Mesh.frag" />
+    <None Include="src\shaders\Mesh.vert" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE.txt" />

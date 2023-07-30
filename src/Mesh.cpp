@@ -10,6 +10,10 @@ void Mesh::updateVertexHeights()
 	}
 }
 
+Mesh::Mesh()
+{
+}
+
 Mesh::Mesh(int meshSize, int tileSize): Mesh(meshSize, meshSize, tileSize)
 {
 
@@ -41,4 +45,30 @@ Mesh::Mesh(int meshWidth, int meshLength, int tileSize)
 			this->indexBuffer.push_back(((y + 1) * (this->meshWidth)) + x);
 		}
 	}
+
+	glGenVertexArrays(1, &this->vaoID);
+
+	glGenBuffers(1, &this->vboID);
+	glGenBuffers(1, &this->iboID);
+
+	glBindVertexArray(this->vaoID);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboID);
+	glBufferData(GL_ARRAY_BUFFER, this->vertexBuffer.size(), this->vertexBuffer.data(), GL_DYNAMIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->iboID);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indexBuffer.size(), this->indexBuffer.data(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	this->shaderProgram = Shader("./shaders/Mesh.vert", "./shaders/Mesh.frag");
+}
+
+void Mesh::draw()
+{
+	glUseProgram(this->shaderProgram.getID());
+	glBindVertexArray(this->vaoID);
+	glDrawElements(GL_TRIANGLES, this->indexBuffer.size(), GL_UNSIGNED_INT, 0);
+
 }

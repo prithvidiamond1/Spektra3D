@@ -45,6 +45,10 @@ App::App(std::string title, int w, int h, int argc, char** argv)
     // framebuffer resize callback
     glfwSetFramebufferSizeCallback(Window, framebuffer_size_callback);
 
+    //Setting OpenGL Global State
+    glEnable(GL_DEPTH_TEST);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -62,6 +66,17 @@ App::App(std::string title, int w, int h, int argc, char** argv)
 
     this->bandCenterFreqs = OBA_Obj.getCenterFreqsOfBands();
     ALB_Obj.ALB_displayVector(this->bandCenterFreqs);
+
+    this->mesh = Mesh(MESH_SIZE, TILE_SIZE);
+
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), w / (float)h, 0.1f, 1000.f);
+    int projectionLocation = glGetUniformLocation(this->mesh.shaderProgram.getID(), "projection");
+    glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
+    int modelLocation = glGetUniformLocation(this->mesh.shaderProgram.getID(), "model");
+    glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 }
 
 App::~App()
@@ -150,12 +165,13 @@ void App::run()
         ImGui::NewFrame();
         update();
         // Rendering
+        this->mesh.draw();
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(Window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
         glClearColor(ClearColor.x, ClearColor.y, ClearColor.z, ClearColor.w);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(Window);
     }
