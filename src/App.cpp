@@ -1,5 +1,13 @@
 #include "App.h"
 
+Camera App::cam;
+bool App::firstMouseDetection;
+float App::lastXpos;
+float App::lastYpos;
+
+float App::deltaTime;
+float App::lastFrame;
+
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
@@ -33,7 +41,16 @@ App::App(std::string title, int w, int h, int argc, char** argv)
     glfwMakeContextCurrent(Window);
     //glfwSwapInterval(1);    // Enables vsync but maybe not needed
 
+
     glfwSetWindowTitle(Window, title.c_str());
+
+    // Set callbacks
+    glfwSetFramebufferSizeCallback(Window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(Window, mouse_movement_callback);
+    glfwSetScrollCallback(Window, mouse_scroll_callback);
+
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Glad requires you to pass a function pointer that returns the context address
         // Note: reinterpret_cast is equivalent to a c-style cast, dont use lightly, always prefer static_cast
@@ -42,19 +59,16 @@ App::App(std::string title, int w, int h, int argc, char** argv)
         std::cout << "Error initializing Glad: " << error_code << std::endl; 
     }
 
-    // framebuffer resize callback
-    glfwSetFramebufferSizeCallback(Window, framebuffer_size_callback);
-
     //Setting OpenGL Global State
     glEnable(GL_DEPTH_TEST);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    //ImPlot::CreateContext();
-    ImGui_ImplGlfw_InitForOpenGL(Window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    //IMGUI_CHECKVERSION();
+    //ImGui::CreateContext();
+    ////ImPlot::CreateContext();
+    //ImGui_ImplGlfw_InitForOpenGL(Window, true);
+    //ImGui_ImplOpenGL3_Init(glsl_version);
 
     //// App Color scheme/theme
     //ImGui::StyleColorsDark();
@@ -62,29 +76,38 @@ App::App(std::string title, int w, int h, int argc, char** argv)
 
     ClearColor = { 0.2f, 0.3f, 0.3f, 1.0f };
 
+    // Initializing some of our static vars
+    firstMouseDetection = true;
+    lastXpos = w / (float)2;
+    lastYpos = h / (float)2;
+
+    deltaTime = 0.0f;
+    lastFrame = 0.0f;
+
     OBA_Obj.setParams(2, ALB_Obj.ALB_captureSampleRate, 3, 20, 20000);
 
     this->bandCenterFreqs = OBA_Obj.getCenterFreqsOfBands();
     ALB_Obj.ALB_displayVector(this->bandCenterFreqs);
 
-    this->mesh = Mesh(MESH_SIZE, TILE_SIZE);
+    this->mesh = new Mesh(MESH_SIZE, TILE_SIZE);
 
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), w / (float)h, 0.1f, 1000.f);
-    int projectionLocation = glGetUniformLocation(this->mesh.shaderProgram.getID(), "projection");
-    glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+    this->mesh->shaderProgram.use();
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
-    int modelLocation = glGetUniformLocation(this->mesh.shaderProgram.getID(), "model");
+    int modelLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "model");
     glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 }
 
 App::~App()
 {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
+    /*ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();*/
     //ImPlot::DestroyContext();
-    ImGui::DestroyContext();
+    //ImGui::DestroyContext();
+
+    delete this->mesh;
+
     glfwDestroyWindow(Window);
     glfwTerminate();
 }
@@ -100,6 +123,17 @@ void App::update()
 
     OBA_Obj.analyseFrames(leftChData, leftChOut);
     OBA_Obj.analyseFrames(rightChData, rightChOut);
+
+    this->mesh->shaderProgram.use();
+
+    glm::mat4 projection = glm::perspective(glm::radians(90.0f), GetWindowSize().x / (float)GetWindowSize().y, 0.1f, 10000.f);
+    int projectionLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "projection");
+    glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+
+    glm::mat4 view = cam.getViewMat();
+    //glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    int viewLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "view");
+    glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
 
     //// Draw graph
     //// Set up ImGUI
@@ -160,19 +194,24 @@ void App::run()
     {
         glfwPollEvents();
         // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
+        /*ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        ImGui::NewFrame();*/
         update();
+        // Other computations
+        float currentFrame = (float)glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        process_keyboard_input(Window);
         // Rendering
-        this->mesh.draw();
-        ImGui::Render();
+        glClearColor(ClearColor.x, ClearColor.y, ClearColor.z, ClearColor.w);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        this->mesh->draw();
+        //ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(Window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(ClearColor.x, ClearColor.y, ClearColor.z, ClearColor.w);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        //ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(Window);
     }
 
@@ -190,4 +229,47 @@ ImVec2 App::GetWindowSize() const
 void App::framebuffer_size_callback(GLFWwindow* window, int w, int h)
 {
     glViewport(0, 0, w, h);
+}
+
+void App::mouse_movement_callback(GLFWwindow* window, double xPosInput, double yPosInput)
+{
+    float xPos = (float)xPosInput;
+    float yPos = (float)yPosInput;
+
+    if (firstMouseDetection) {
+        lastXpos = xPos;
+        lastYpos = yPos;
+        firstMouseDetection = false;
+    }
+
+    float xOffset = xPos - lastXpos;
+    float yOffset = lastYpos - yPos;    // reversed since y-coordinates go from bottom to top
+    lastXpos = xPos;
+    lastYpos = yPos;
+
+    cam.processMouseMovement(xOffset, yOffset);
+}
+
+void App::mouse_scroll_callback(GLFWwindow* window, double xOffset, double yOffset)
+{
+    cam.processMouseScroll((float)yOffset);
+}
+
+void App::process_keyboard_input(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        cam.processKeyboardInput(CamMovement::FORWARD, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        cam.processKeyboardInput(CamMovement::BACKWARD, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        cam.processKeyboardInput(CamMovement::LEFT, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        cam.processKeyboardInput(CamMovement::RIGHT, deltaTime);
+    }
 }

@@ -25,6 +25,8 @@ public:
 
 	Mesh();
 
+	~Mesh();
+
 	Mesh(int meshSize, int tileSize);
 
 	Mesh(int meshWidth, int meshLength, int tileSize);
