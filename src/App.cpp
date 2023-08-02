@@ -84,7 +84,7 @@ App::App(std::string title, int w, int h, int argc, char** argv)
     deltaTime = 0.0f;
     lastFrame = 0.0f;
 
-    OBA_Obj.setParams(2, ALB_Obj.ALB_captureSampleRate, 3, 20, 20000);
+    OBA_Obj.setParams(2, ALB_Obj.ALB_captureSampleRate, 3, 16, 20000);
 
     this->bandCenterFreqs = OBA_Obj.getCenterFreqsOfBands();
     ALB_Obj.ALB_displayVector(this->bandCenterFreqs);
@@ -124,9 +124,26 @@ void App::update()
     OBA_Obj.analyseFrames(leftChData, leftChOut);
     OBA_Obj.analyseFrames(rightChData, rightChOut);
 
+    std::vector<float> avgChOut;
+
+    OBA_Obj.averageChannelOutputs(std::vector<std::vector<float>>({ leftChOut, rightChOut }), avgChOut);
+
+    std::vector<float> newRow;
+
+    genNewHeightRow(avgChOut, newRow, this->mesh->getMeshLength(), this->bandCenterFreqs.size());
+
+    if (!checkNewRowForNan(newRow)) {
+        newRow.assign(this->mesh->getMeshWidth(), 0);
+    }
+
+    this->mesh->heightMap.insert(this->mesh->heightMap.begin(), newRow.begin(), newRow.end());
+    this->mesh->heightMap.erase(this->mesh->heightMap.begin() + (this->mesh->getMeshLength() * this->mesh->getMeshWidth()), this->mesh->heightMap.end());
+    this->mesh->updateVertexHeights();
+
     this->mesh->shaderProgram.use();
 
-    glm::mat4 projection = glm::perspective(glm::radians(90.0f), GetWindowSize().x / (float)GetWindowSize().y, 0.1f, 10000.f);
+    glm::mat4 projection = glm::perspective(glm::radians(cam.fov), GetWindowSize().x / (float)GetWindowSize().y, 0.1f, 10000.f);
+    //glm::mat4 projection = glm::perspective(glm::radians(90.0f), GetWindowSize().x / (float)GetWindowSize().y, 0.1f, 10000.f);
     int projectionLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "projection");
     glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
@@ -272,4 +289,54 @@ void App::process_keyboard_input(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         cam.processKeyboardInput(CamMovement::RIGHT, deltaTime);
     }
+}
+
+// Note that the inputVec has negative dB values. Only their absolute values must be used.
+void App::genNewHeightRow(const std::vector<float>& inputVec, std::vector<float>& outputVec, int meshLength, int bandCount)
+{
+    int valsPerBand = meshLength / bandCount;
+
+    std::function<float(float, float, float)> curveGenFunc = [](float in, float max, float a) {
+        return fabsf(max)/ (float)((1 + a * in * in)); 
+    };
+
+    float a = 0.1;
+    float lowEdge = 0.1;
+
+    int divisionsPerHalf = 4;
+
+    for (int i = 0; i < inputVec.size(); i++){
+        
+        float max = inputVec[i];
+
+        float startEdge = sqrtf(((fabsf(max) / lowEdge) - 1) / a);
+
+        std::vector<float> evalPoints;
+
+        float intervalStride = 2 * startEdge / (2.0f * (divisionsPerHalf - 1));
+
+        evalPoints.push_back(-1 * startEdge);
+        for (int i = 1; i <= (2 * (divisionsPerHalf - 1)) + 1; i++) {
+            evalPoints.push_back((-1 * startEdge) + i * intervalStride);
+        }
+        evalPoints.push_back(startEdge);
+        
+        for (int i = 0; i < evalPoints.size(); i++) {
+            outputVec.push_back(curveGenFunc(evalPoints[i], max, a));
+        }
+    }
+}
+
+bool App::checkNewRowForNan(const std::vector<float>& newRow)
+{
+    bool result = true;
+
+    for (float val : newRow) {
+        if (std::isnan(val)) {
+            result = false;
+            break;
+        }
+    }
+
+    return result;
 }

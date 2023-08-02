@@ -2,12 +2,32 @@
 
 void Mesh::updateVertexHeights()
 {
-	for (int y = 0; y < this->meshLength; y++) {
+	for (int z = 0; z < this->meshLength; z++) {
 		for (int x = 0; x < this->meshWidth; x++) {
-			int vertexIndex = (y * this->meshWidth + x);
-			this->vertexBuffer[(vertexIndex * 3) + 2] = this->heightMap[vertexIndex];
+			int vertexIndex = (z * this->meshWidth + x);
+			this->vertexBuffer[(vertexIndex * 3) + 1] = this->heightMap[vertexIndex];
 		}
 	}
+
+	/*glBindVertexArray(this->vaoID);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboID);*/
+	glBufferData(GL_ARRAY_BUFFER, this->vertexBuffer.size() * sizeof(float), this->vertexBuffer.data(), GL_STREAM_DRAW);
+	
+}
+
+int Mesh::getTileSize()
+{
+	return this->tileSize;
+}
+
+int Mesh::getMeshWidth()
+{
+	return this->meshWidth;
+}
+
+int Mesh::getMeshLength()
+{
+	return this->meshLength;
 }
 
 Mesh::Mesh()
@@ -32,24 +52,24 @@ Mesh::Mesh(int meshWidth, int meshLength, int tileSize)
 	this->meshLength = meshLength;
 	this->tileSize = tileSize;
 
-	for (int y = 0; y < this->meshLength; y++) {
+	for (int z = 0; z < this->meshLength; z++) {
 		for (int x = 0; x < this->meshWidth; x++) {
-			this->vertexBuffer.push_back((x - (this->meshWidth /(float) 2)) * this->tileSize);
-			this->vertexBuffer.push_back((y - (this->meshLength /(float) 2)) * this->tileSize);
+			this->vertexBuffer.push_back((x - (this->meshWidth / 2.0f)) * this->tileSize);
 			this->vertexBuffer.push_back(0);
+			this->vertexBuffer.push_back((z - (this->meshLength / 2.0f)) * this->tileSize);
 
 			this->heightMap.push_back(0);
 		}
 	}
 
-	for (int y = 0; y < this->meshLength - 1; y++) {
+	for (int z = 0; z < this->meshLength - 1; z++) {
 		for (int x = 0; x < this->meshWidth - 1; x++) {
-			this->indexBuffer.push_back((y * (this->meshWidth)) + x);
-			this->indexBuffer.push_back((y * (this->meshWidth)) + (x + 1));
-			this->indexBuffer.push_back(((y + 1) * (this->meshWidth)) + x);
-			this->indexBuffer.push_back((y * (this->meshWidth)) + (x + 1));
-			this->indexBuffer.push_back(((y + 1) * (this->meshWidth)) + (x + 1));
-			this->indexBuffer.push_back(((y + 1) * (this->meshWidth)) + x);
+			this->indexBuffer.push_back((z * (this->meshWidth)) + x); // 0
+			this->indexBuffer.push_back((z * (this->meshWidth)) + (x + 1)); // 2
+			this->indexBuffer.push_back(((z + 1) * (this->meshWidth)) + x);
+			this->indexBuffer.push_back((z * (this->meshWidth)) + (x + 1));
+			this->indexBuffer.push_back(((z + 1) * (this->meshWidth)) + (x + 1)); // 3
+			this->indexBuffer.push_back(((z + 1) * (this->meshWidth)) + x); // 1
 		}
 	}
 
@@ -61,10 +81,11 @@ Mesh::Mesh(int meshWidth, int meshLength, int tileSize)
 	glBindVertexArray(this->vaoID);
 
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboID);
-	glBufferData(GL_ARRAY_BUFFER, this->vertexBuffer.size(), this->vertexBuffer.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, this->vertexBuffer.size() * sizeof(float), NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, this->vertexBuffer.size() * sizeof(float), this->vertexBuffer.data(), GL_STREAM_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->iboID);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indexBuffer.size(), this->indexBuffer.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indexBuffer.size() * sizeof(unsigned int), this->indexBuffer.data(), GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);

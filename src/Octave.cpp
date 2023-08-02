@@ -50,3 +50,15 @@ void OctaveBandAnalyser::analyseFrames(const std::vector<float>& inputFrames, st
 		outputVals.push_back(dBFS);
 	}
 }
+
+// Assumes all channels have the same number of values as the first one
+void OctaveBandAnalyser::averageChannelOutputs(const std::vector<std::vector<float>>& inputChannels, std::vector<float>& outputChannel)
+{
+	for (int i = 0; i < inputChannels[0].size(); i++) {
+		float sum = 0;
+		for(std::vector<float> inputChannel: inputChannels){
+			sum += inputChannel[i];
+		}
+		outputChannel.push_back(sum / (float)inputChannels.size());
+	}
+}

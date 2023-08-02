@@ -35,4 +35,8 @@ public:
 
 	void updateVertexHeights();
 
+	int getTileSize();
+	int getMeshWidth();
+	int getMeshLength();
+
 };

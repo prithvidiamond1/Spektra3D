@@ -9,6 +9,8 @@ void AudioLoopBack::ALB_displayVector(const std::vector<float>& inputVector)
 		std::cout << value << " ";
 	}
 	std::cout << std::endl;
+
+	std::cout << "Size: " << inputVector.size() << std::endl;
 }
 
 void AudioLoopBack::ALB_dataCallback(ma_device* device, void* output, const void* input, ma_uint32 frameCount)

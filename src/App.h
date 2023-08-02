@@ -23,6 +23,9 @@
 #include "Mesh.h"
 #include "Camera.h"
 
+#include <functional>
+#include <cmath>
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
@@ -41,7 +44,7 @@ private:
 
 	std::vector<float> bandCenterFreqs;
 
-	const int MESH_SIZE = 256;
+	const int MESH_SIZE = 288;	// 32*9
 	const int TILE_SIZE = 20;
 
 public:
@@ -71,4 +74,8 @@ public:
 	static void mouse_scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
 
 	static void process_keyboard_input(GLFWwindow* window);
+
+	static void genNewHeightRow(const std::vector<float>& inputVec, std::vector<float>& outputVec, int meshLength, int bandCount);
+
+	static bool checkNewRowForNan(const std::vector<float>& newRow);
 };

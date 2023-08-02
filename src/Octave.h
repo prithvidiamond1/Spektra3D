@@ -30,6 +30,8 @@ public:
 
 	void analyseFrames(const std::vector<float>& inputFrames, std::vector<float>& outputVals);
 
+	void averageChannelOutputs(const std::vector<std::vector<float>>& inputChannels, std::vector<float>& outputChannel);
+
 };
 
 
