@@ -44,8 +44,12 @@ private:
 
 	std::vector<float> bandCenterFreqs;
 
-	const int MESH_SIZE = 288;	// 32*9
-	const int TILE_SIZE = 20;
+	const int MESH_SIZE = 32; //32 * 9;
+	const int MESH_LENGTH = 128;
+	const int MESH_WIDTH = 32; // must be an odd number
+	const int TILE_SIZE = 20; // originally 20
+
+	static const int maxHeight = 500;
 
 public:
 	static Camera cam;	// there may only be one camera
@@ -75,7 +79,11 @@ public:
 
 	static void process_keyboard_input(GLFWwindow* window);
 
-	static void genNewHeightRow(const std::vector<float>& inputVec, std::vector<float>& outputVec, int meshLength, int bandCount);
+	static void genNewHeightRow(const std::vector<float>& inputVec, std::vector<float>& outputVec, int meshWidth, int bandCount);
 
 	static bool checkNewRowForNan(const std::vector<float>& newRow);
+
+	static float mapValToRange(float inputVal, float curMin, float curMax, float newMin, float newMax);
+
+	static void applyDecay(std::vector<float>& heightMap, int meshWidth, float decayVal = 0.99);
 };

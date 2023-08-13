@@ -61,7 +61,13 @@ App::App(std::string title, int w, int h, int argc, char** argv)
 
     //Setting OpenGL Global State
     glEnable(GL_DEPTH_TEST);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glEnable(GL_BLEND); // enables blending
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+    //glPointSize(10.0f);
+
 
     // Setup Dear ImGui context
     //IMGUI_CHECKVERSION();
@@ -74,7 +80,8 @@ App::App(std::string title, int w, int h, int argc, char** argv)
     //ImGui::StyleColorsDark();
     //ImPlot::StyleColorsDark();
 
-    ClearColor = { 0.2f, 0.3f, 0.3f, 1.0f };
+    //ClearColor = { 0.2f, 0.3f, 0.3f, 1.0f };
+    ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 
     // Initializing some of our static vars
     firstMouseDetection = true;
@@ -89,7 +96,8 @@ App::App(std::string title, int w, int h, int argc, char** argv)
     this->bandCenterFreqs = OBA_Obj.getCenterFreqsOfBands();
     ALB_Obj.ALB_displayVector(this->bandCenterFreqs);
 
-    this->mesh = new Mesh(MESH_SIZE, TILE_SIZE);
+    //this->mesh = new Mesh(MESH_SIZE, TILE_SIZE);
+    this->mesh = new Mesh(MESH_WIDTH, MESH_LENGTH, TILE_SIZE);
 
     this->mesh->shaderProgram.use();
 
@@ -97,6 +105,10 @@ App::App(std::string title, int w, int h, int argc, char** argv)
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
     int modelLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "model");
     glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+
+    // setting maxHeight uniform
+    int maxHeightLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "maxHeight");
+    glUniform1f(maxHeightLocation, (float)maxHeight);
 }
 
 App::~App()
@@ -130,7 +142,7 @@ void App::update()
 
     std::vector<float> newRow;
 
-    genNewHeightRow(avgChOut, newRow, this->mesh->getMeshLength(), this->bandCenterFreqs.size());
+    genNewHeightRow(avgChOut, newRow, this->mesh->getMeshWidth(), this->bandCenterFreqs.size());
 
     if (!checkNewRowForNan(newRow)) {
         newRow.assign(this->mesh->getMeshWidth(), 0);
@@ -138,11 +150,12 @@ void App::update()
 
     this->mesh->heightMap.insert(this->mesh->heightMap.begin(), newRow.begin(), newRow.end());
     this->mesh->heightMap.erase(this->mesh->heightMap.begin() + (this->mesh->getMeshLength() * this->mesh->getMeshWidth()), this->mesh->heightMap.end());
+    //applyDecay(this->mesh->heightMap, this->mesh->getMeshWidth(), 0.985);
     this->mesh->updateVertexHeights();
 
     this->mesh->shaderProgram.use();
 
-    glm::mat4 projection = glm::perspective(glm::radians(cam.fov), GetWindowSize().x / (float)GetWindowSize().y, 0.1f, 10000.f);
+    glm::mat4 projection = glm::perspective(glm::radians(cam.fov), GetWindowSize().x / (float)GetWindowSize().y, 0.1f, 20000.f);
     //glm::mat4 projection = glm::perspective(glm::radians(90.0f), GetWindowSize().x / (float)GetWindowSize().y, 0.1f, 10000.f);
     int projectionLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "projection");
     glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
@@ -151,54 +164,6 @@ void App::update()
     //glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     int viewLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "view");
     glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
-
-    //// Draw graph
-    //// Set up ImGUI
-    //ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-    //ImGui::SetNextWindowSize(GetWindowSize(), ImGuiCond_Always);
-    //ImGui::Begin("AudioLoopBackSpectrums", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
-
-    //// Left Channel graph
-    //ImGui::BeginChild("LeftChannelSpectrumSection", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, -1));
-    //ImGui::Text("Left Channel Spectrum");
-    //ImGui::Separator();
-
-    //// plot Left Channel data
-    //if (ImPlot::BeginPlot("LeftChannelSpectrumPlot", ImVec2(-1,-1))) {
-    //    ImPlot::SetupAxesLimits(16, ALB_Obj.ALB_captureSampleRate / 2, -100, 0);
-    //    ImPlot::SetupAxes("Frequency (Hz)", "Amplitude (dB)", 0, ImPlotAxisFlags_Invert);
-    //    ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_SymLog);
-    //    //ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
-
-    //    ImPlot::PlotBars("LeftAmplitudeCurve", this->bandCenterFreqs.data(), leftChOut.data(), leftChOut.size(), 1);
-
-    //    ImPlot::EndPlot();
-    //}
-
-    //ImGui::EndChild();
-
-
-    //ImGui::SameLine();
-
-    //// Right Channel graph
-    //ImGui::BeginChild("RightChannelSpectrumSection", ImVec2(0, -1));
-    //ImGui::Text("Right Channel Spectrum");
-    //ImGui::Separator();
-
-    //// plot Right Channel data
-    //if (ImPlot::BeginPlot("RightChannelSpectrumPlot", ImVec2(-1, -1))) {
-    //    ImPlot::SetupAxesLimits(16, ALB_Obj.ALB_captureSampleRate / 2, -100, 0);
-    //    ImPlot::SetupAxes("Frequency (Hz)", "Amplitude (dB)", 0, ImPlotAxisFlags_Invert);
-    //    ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_SymLog);
-    //    //ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
-
-    //    ImPlot::PlotBars("RightAmplitudeCurve", this->bandCenterFreqs.data(), rightChOut.data(), rightChOut.size(), 1);
-
-    //    ImPlot::EndPlot();
-    //}
-
-    //ImGui::EndChild();
-    //ImGui::End();
 }
 
 void App::run()
@@ -292,22 +257,22 @@ void App::process_keyboard_input(GLFWwindow* window)
 }
 
 // Note that the inputVec has negative dB values. Only their absolute values must be used.
-void App::genNewHeightRow(const std::vector<float>& inputVec, std::vector<float>& outputVec, int meshLength, int bandCount)
+void App::genNewHeightRow(const std::vector<float>& inputVec, std::vector<float>& outputVec, int meshWidth, int bandCount)
 {
-    int valsPerBand = meshLength / bandCount;
+    int valsPerBand = meshWidth / bandCount;
 
     std::function<float(float, float, float)> curveGenFunc = [](float in, float max, float a) {
         return fabsf(max)/ (float)((1 + a * in * in)); 
     };
 
-    float a = 0.1;
-    float lowEdge = 0.1;
+    float a = 0.01;
+    float lowEdge = 1;
 
-    int divisionsPerHalf = 4;
+    int divisionsPerHalf = valsPerBand / 2;
 
     for (int i = 0; i < inputVec.size(); i++){
         
-        float max = inputVec[i];
+        float max = mapValToRange(fabsf(inputVec[i]), 0, 100, 0, maxHeight);
 
         float startEdge = sqrtf(((fabsf(max) / lowEdge) - 1) / a);
 
@@ -315,12 +280,20 @@ void App::genNewHeightRow(const std::vector<float>& inputVec, std::vector<float>
 
         float intervalStride = 2 * startEdge / (2.0f * (divisionsPerHalf - 1));
 
-        evalPoints.push_back(-1 * startEdge);
-        for (int i = 1; i <= (2 * (divisionsPerHalf - 1)) + 1; i++) {
-            evalPoints.push_back((-1 * startEdge) + i * intervalStride);
+        //float startPercent = 0.0625;
+        float startPercent = 0.05;
+        float previousEvalPoint = 0;
+
+        evalPoints.push_back(0);
+        for (int i = 0; i < divisionsPerHalf; i++) {
+            float evalPoint = previousEvalPoint + startPercent * intervalStride;
+            previousEvalPoint = evalPoint;
+
+            evalPoints.insert(evalPoints.begin(), -1 * evalPoint);
+            evalPoints.insert(evalPoints.end(), evalPoint);
+            startPercent *= 2;
         }
-        evalPoints.push_back(startEdge);
-        
+
         for (int i = 0; i < evalPoints.size(); i++) {
             outputVec.push_back(curveGenFunc(evalPoints[i], max, a));
         }
@@ -339,4 +312,16 @@ bool App::checkNewRowForNan(const std::vector<float>& newRow)
     }
 
     return result;
+}
+
+float App::mapValToRange(float inputVal, float curMin, float curMax, float newMin, float newMax)
+{
+    return (newMax - newMin) * (inputVal / (curMax - curMin));
+}
+
+void App::applyDecay(std::vector<float>& heightMap, int meshWidth, float decayVal)
+{
+    for (int i = meshWidth; i < heightMap.size(); i++) {
+        heightMap[i] *= decayVal;
+    }
 }
