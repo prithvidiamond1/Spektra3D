@@ -6,16 +6,16 @@ void Shader::checkShaderCompilation(unsigned int ID, std::string type)
 	char infoLog[1024];
 
 	if (type.compare("PROGRAM") != 0) {
-		glGetShaderiv(this->shaderProgramID, GL_COMPILE_STATUS, &success);
+		glGetShaderiv(ID, GL_COMPILE_STATUS, &success);
 		if (!success) {
-			glGetShaderInfoLog(this->shaderProgramID, 1024, NULL, infoLog);
+			glGetShaderInfoLog(ID, 1024, NULL, infoLog);
 			std::cout << "ERROR - " << type << " shader compilation failed: \n\n" << infoLog << std::endl;
 		}
 	}
 	else {
-		glGetProgramiv(this->shaderProgramID, GL_LINK_STATUS, &success);
+		glGetProgramiv(ID, GL_LINK_STATUS, &success);
 		if (!success) {
-			glGetProgramInfoLog(this->shaderProgramID, 1024, NULL, infoLog);
+			glGetProgramInfoLog(ID, 1024, NULL, infoLog);
 			std::cout << "ERROR - shader " << type << " linking failed: \n\n" << infoLog << std::endl;
 		}
 	}

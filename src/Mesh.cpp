@@ -11,8 +11,8 @@ void Mesh::updateVertexHeights()
 
 	/*glBindVertexArray(this->vaoID);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboID);*/
-	glBufferData(GL_ARRAY_BUFFER, this->vertexBuffer.size() * sizeof(float), this->vertexBuffer.data(), GL_STREAM_DRAW);
-	
+	//glBufferData(GL_ARRAY_BUFFER, this->vertexBuffer.size() * sizeof(float), this->vertexBuffer.data(), GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, this->vertexBuffer.size() * sizeof(float), this->vertexBuffer.data());
 }
 
 int Mesh::getTileSize()
@@ -81,8 +81,7 @@ Mesh::Mesh(int meshWidth, int meshLength, int tileSize)
 	glBindVertexArray(this->vaoID);
 
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboID);
-	glBufferData(GL_ARRAY_BUFFER, this->vertexBuffer.size() * sizeof(float), NULL, GL_STREAM_DRAW);
-	glBufferData(GL_ARRAY_BUFFER, this->vertexBuffer.size() * sizeof(float), this->vertexBuffer.data(), GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, this->vertexBuffer.size() * sizeof(float), this->vertexBuffer.data(), GL_DYNAMIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->iboID);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indexBuffer.size() * sizeof(unsigned int), this->indexBuffer.data(), GL_STATIC_DRAW);

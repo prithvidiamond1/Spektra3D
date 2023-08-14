@@ -189,10 +189,15 @@ void App::run()
         glClearColor(ClearColor.x, ClearColor.y, ClearColor.z, ClearColor.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         this->mesh->draw();
+        //// Error checking
+        unsigned int errorFlag = glGetError();
+        if (errorFlag) {
+            std::cout << "OpenGL Error Flag: " << errorFlag << std::endl;
+        }
+
         //ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(Window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
         //ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(Window);
     }
