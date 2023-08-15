@@ -61,8 +61,8 @@ App::App(std::string title, int w, int h, int argc, char** argv)
 
     //Setting OpenGL Global State
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_BLEND); // enables blending
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND); // enables blending
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_PROGRAM_POINT_SIZE);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
@@ -194,7 +194,6 @@ void App::run()
         if (errorFlag) {
             std::cout << "OpenGL Error Flag: " << errorFlag << std::endl;
         }
-
         //ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(Window, &display_w, &display_h);

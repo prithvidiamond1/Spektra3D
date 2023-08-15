@@ -45,7 +45,7 @@ private:
 	std::vector<float> bandCenterFreqs;
 
 	const int MESH_SIZE = 32; //32 * 9;
-	const int MESH_LENGTH = 128;
+	const int MESH_LENGTH = 32; //128
 	const int MESH_WIDTH = 32; // must be an odd number
 	const int TILE_SIZE = 20; // originally 20
 

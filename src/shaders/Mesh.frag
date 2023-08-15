@@ -28,12 +28,9 @@ void main()
     r = dot(cxy, cxy);
     delta = fwidth(r);
 
-//    float ss = smoothstep(1.0 - delta, 1.0 + delta, r);
-
     alpha = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, r);
 
     vec3 finalColor = mapHeightToColor(vertexHeight);
-	fragColor = vec4(finalColor, 1.0)*alpha;
-//    fragColor = vec4(finalColor.x, finalColor.z, alpha, 1.0);
+    fragColor = vec4(finalColor, alpha);
 }
 

@@ -96,6 +96,6 @@ void Mesh::draw()
 {
 	this->shaderProgram.use();
 	glBindVertexArray(this->vaoID);
-	glDrawElements(GL_TRIANGLES, this->indexBuffer.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_POINTS, this->indexBuffer.size(), GL_UNSIGNED_INT, 0);
 
 }
