@@ -169,8 +169,8 @@
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="README.md" />
-    <None Include="src\shaders\Mesh.frag" />
-    <None Include="src\shaders\Mesh.vert" />
+    <None Include="src\Shaders\Mesh.frag" />
+    <None Include="src\Shaders\Mesh.vert" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE.txt" />
