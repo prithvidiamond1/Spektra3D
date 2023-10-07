@@ -1,5 +1,48 @@
 #include "App.h"
 
+
+//--------------------------------------------------------
+
+#ifdef DESKTOP_BG_MODE
+#ifdef _WIN32
+
+// code for desktop background mode
+
+
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
+    HWND p = FindWindowEx(hwnd, NULL, L"SHELLDLL_DefView", NULL);
+    HWND* ret = (HWND*)lParam;
+
+    if (p) {
+        // Gets the WorkerW Window after the current one.
+        *ret = FindWindowEx(NULL, hwnd, L"WorkerW", NULL);
+        return false;
+    }
+    return true;
+}
+
+HWND get_wallpaper_window() {
+    // Fetch the Progman window
+    HWND progman = FindWindow(L"ProgMan", NULL);
+    // Send 0x052C to Progman. This message directs Progman to spawn a 
+    // WorkerW behind the desktop icons. If it is already there, nothing 
+    // happens.
+    SendMessageTimeout(progman, 0x052C, 0, 0, SMTO_NORMAL, 1000, nullptr);
+    
+    // We enumerate all Windows, until we find one, that has the SHELLDLL_DefView 
+    // as a child. 
+    // If we found that window, we take its next sibling and assign it to workerw.
+    HWND wallpaper_hwnd = nullptr;
+    EnumWindows(EnumWindowsProc, (LPARAM)&wallpaper_hwnd);
+    // Return the handle you're looking for.
+    return wallpaper_hwnd;
+}
+
+#endif
+#endif
+
+// -------------------------------------------
+
 Camera App::cam;
 bool App::firstMouseDetection;
 float App::lastXpos;
@@ -27,30 +70,110 @@ App::App(std::string title, int w, int h, int argc, char** argv)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 3.2+ only
 
+    // Enable transparent framebuffer
+    //glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+
+#ifdef DESKTOP_BG_MODE
+    // for testing desktop background mode
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); 
+#endif
+
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);           // Required on Mac
 #endif
-
+    
+#ifndef DESKTOP_BG_MODE
     // Create window with graphics context
     Window = glfwCreateWindow(w, h, title.c_str(), NULL, NULL);
+
+    glfwSetWindowPos(Window, w/4, h/4);
+#else 
+    // for desktop background mode
+    const GLFWvidmode* videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+    // Create window with graphics context
+    Window = glfwCreateWindow(videoMode->width, videoMode->height, title.c_str(), NULL, NULL);
     if (Window == NULL)
     {
         fprintf(stderr, "Failed to initialize GLFW window!\n");
         abort();
     }
+
+    glfwSetWindowPos(Window, 0, 0);
+#endif
+
+
     glfwMakeContextCurrent(Window);
     //glfwSwapInterval(1);    // Enables vsync but maybe not needed
-
 
     glfwSetWindowTitle(Window, title.c_str());
 
     // Set callbacks
+    // disabled for desktop background mode
+#ifndef DESKTOP_BG_MODE
+#ifdef CAPTURE_MOUSE 
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
+
+    // set framebuffersizecallback for adjusting size at runtime
     glfwSetFramebufferSizeCallback(Window, framebuffer_size_callback);
+#endif
     glfwSetCursorPosCallback(Window, mouse_movement_callback);
     glfwSetScrollCallback(Window, mouse_scroll_callback);
 
-    // tell GLFW to capture our mouse
-    glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // adding code for desktop background mode
+#ifdef DESKTOP_BG_MODE
+#ifdef _WIN32
+    HWND glfwWindowHandle = glfwGetWin32Window(Window);
+    HWND wallpaperWindowHandle = get_wallpaper_window();
+
+    if (wallpaperWindowHandle) {
+        SetParent(glfwWindowHandle, wallpaperWindowHandle);
+        ShowWindow(glfwWindowHandle, SW_SHOW);
+
+        // Get the current window style
+        LONG style = GetWindowLong(glfwWindowHandle, GWL_STYLE);
+        style &= ~(
+            WS_CAPTION |
+            WS_THICKFRAME |
+            WS_SYSMENU |
+            WS_MAXIMIZEBOX |
+            WS_MINIMIZEBOX
+            );
+        style |= WS_CHILD;
+        SetWindowLong(glfwWindowHandle, GWL_STYLE, style);
+
+        // Get the current extended window style
+        LONG exStyle = GetWindowLong(glfwWindowHandle, GWL_EXSTYLE);
+        exStyle &= ~(
+            WS_EX_DLGMODALFRAME |
+            WS_EX_COMPOSITED |
+            WS_EX_WINDOWEDGE |
+            WS_EX_CLIENTEDGE |
+            WS_EX_LAYERED |
+            WS_EX_STATICEDGE |
+            WS_EX_TOOLWINDOW |
+            WS_EX_APPWINDOW
+            );
+        SetWindowLong(glfwWindowHandle, GWL_EXSTYLE, exStyle);
+
+        DWORD dwError = GetLastError();
+        if (dwError) {
+            // Handle or report the error
+            std::cout << "Error: " << dwError << std::endl;
+        }
+
+        //MoveWindow(glfwWindowHandle, 0, 0, videoMode->width, videoMode->height, TRUE);
+        /*SetWindowPos(glfwWindowHandle, HWND_TOP, 0, 0, videoMode->width, videoMode->height,
+            SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);*/
+
+        SetWindowPos(glfwWindowHandle, wallpaperWindowHandle, 0, 0, 0, 0,
+            SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+    }
+#endif
+#endif
+    // ---------------------------
 
     // Glad requires you to pass a function pointer that returns the context address
         // Note: reinterpret_cast is equivalent to a c-style cast, dont use lightly, always prefer static_cast
@@ -61,11 +184,13 @@ App::App(std::string title, int w, int h, int argc, char** argv)
 
     //Setting OpenGL Global State
     glEnable(GL_DEPTH_TEST);
+
     glEnable(GL_BLEND); // enables blending
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_PROGRAM_POINT_SIZE);
+    
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+    glEnable(GL_PROGRAM_POINT_SIZE);
     //glPointSize(10.0f);
 
 
@@ -81,7 +206,7 @@ App::App(std::string title, int w, int h, int argc, char** argv)
     //ImPlot::StyleColorsDark();
 
     //ClearColor = { 0.2f, 0.3f, 0.3f, 1.0f };
-    ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+    ClearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
 
     // Initializing some of our static vars
     firstMouseDetection = true;
@@ -105,6 +230,16 @@ App::App(std::string title, int w, int h, int argc, char** argv)
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
     int modelLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "model");
     glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+
+    glm::mat4 view = glm::mat4(
+        { 0.99999, -1.04541E-07, -0.00523, -2.73422 },
+        { -0.00234, 0.89415, -0.44775, -285.31427 },
+        { 0.00468, 0.44776, 0.89414, -620.26868 },
+        { 0.00, 0.00, 0.00, 1.00 }
+    );
+    view = glm::transpose(view);
+    int viewLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "view");
+    glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
 
     // setting maxHeight uniform
     int maxHeightLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "maxHeight");
@@ -130,15 +265,13 @@ void App::update()
 
     ALB_Obj.ALB_getAudioData(leftChData, rightChData);
 
-    // Process the Audio Data
-    std::vector<float> leftChOut, rightChOut;
+    // Average channel outputs
+    std::vector<float> avgChData;
+    OBA_Obj.averageChannelOutputs(std::vector<std::vector<float>>({ leftChData, rightChData }), avgChData);;
 
-    OBA_Obj.analyseFrames(leftChData, leftChOut);
-    OBA_Obj.analyseFrames(rightChData, rightChOut);
-
+    // Process the Audio Data   
     std::vector<float> avgChOut;
-
-    OBA_Obj.averageChannelOutputs(std::vector<std::vector<float>>({ leftChOut, rightChOut }), avgChOut);
+    OBA_Obj.analyseFrames(avgChData, avgChOut);
 
     std::vector<float> newRow;
 
@@ -160,10 +293,21 @@ void App::update()
     int projectionLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "projection");
     glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
-    glm::mat4 view = cam.getViewMat();
+    
     //glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    /*glm::mat4 view = glm::mat4(
+        { 0.99999, -1.04541E-07, -0.00523, -2.73422 },
+        {-0.00234, 0.89415, -0.44775, -285.31427},
+        {0.00468, 0.44776, 0.89414, -620.26868},
+        {0.00, 0.00, 0.00, 1.00}
+    );
+    view = glm::transpose(view);*/
+    
+#if !defined(DESKTOP_BG_MODE) && defined(ENABLE_CAM)
+    glm::mat4 view = cam.getViewMat();
     int viewLocation = glGetUniformLocation(this->mesh->shaderProgram.getID(), "view");
     glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+#endif
 }
 
 void App::run()
@@ -190,9 +334,13 @@ void App::run()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         this->mesh->draw();
         //// Error checking
-        unsigned int errorFlag = glGetError();
-        if (errorFlag) {
-            std::cout << "OpenGL Error Flag: " << errorFlag << std::endl;
+        unsigned int glErrorFlag = glGetError();
+        if (glErrorFlag) {
+            std::cout << "OpenGL Error Flag: " << glErrorFlag << std::endl;
+        }
+        const char* glfwError = nullptr;
+        if (glfwGetError(&glfwError)) {
+            std::cerr << "GLFW Error: " << glfwError << std::endl;
         }
         //ImGui::Render();
         int display_w, display_h;
@@ -329,3 +477,4 @@ void App::applyDecay(std::vector<float>& heightMap, int meshWidth, float decayVa
         heightMap[i] *= decayVal;
     }
 }
+

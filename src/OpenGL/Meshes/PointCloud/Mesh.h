@@ -3,7 +3,7 @@
 #include <vector>
 #include <glad/glad.h>
 
-#include "Shader.h"
+#include "../../Shaders/Shader.h"
 
 class Mesh {
 private:
