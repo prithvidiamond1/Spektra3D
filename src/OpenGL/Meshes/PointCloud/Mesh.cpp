@@ -89,7 +89,7 @@ Mesh::Mesh(int meshWidth, int meshLength, int tileSize)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	this->shaderProgram = Shader("./src/shaders/Mesh.vert", "./src/shaders/Mesh.frag");
+	this->shaderProgram = Shader("./src/OpenGL/Meshes/PointCloud/Mesh.vert", "./src/OpenGL/Meshes/PointCloud/Mesh.frag");
 }
 
 void Mesh::draw()

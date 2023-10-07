@@ -1,27 +1,38 @@
 #pragma once
 
+//#define DESKTOP_BG_MODE
+//#define ENABLE_CAM
+//#define CAPTURE_MOUSE
+
 #define IMGUI_DEFINE_MATH_OPERATORS
+
+#ifdef _WIN32
+#define GLFW_EXPOSE_NATIVE_WIN32
+
+#include <Windows.h>
+#endif
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
+#include <GLFW/glfw3native.h>
 
 #include "imgui.h"
 #include "implot.h"
 #include "imgui_internal.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include "../OpenGL/Imgui/imgui_impl_glfw.h"
+#include "../OpenGL/Imgui/imgui_impl_opengl3.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "ALB.h";
-#include "Octave.h";
+#include "../AudioLoopBack/ALB.h";
+#include "../BandAnalyzers/Octave/Octave.h";
 
 #include <string>
 
-#include "Mesh.h"
-#include "Camera.h"
+#include "../OpenGL/Meshes/PointCloud/Mesh.h"
+#include "../OpenGL/Camera/Camera.h"
 
 #include <functional>
 #include <cmath>

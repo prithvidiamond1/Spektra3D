@@ -18,71 +18,71 @@
     <ClCompile Include="src\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ALB.cpp">
+    <ClCompile Include="src\AudioLoopBack\ALB.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\miniaudio_init.c">
+    <ClCompile Include="src\AudioLoopBack\miniaudio_init.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\App.cpp">
+    <ClCompile Include="src\App\App.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\imgui_impl_glfw.cpp">
+    <ClCompile Include="src\OpenGL\Imgui\imgui_impl_glfw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\imgui_impl_opengl3.cpp">
+    <ClCompile Include="src\OpenGL\Imgui\imgui_impl_opengl3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Octave.cpp">
+    <ClCompile Include="src\BandAnalyzers\Octave\Octave.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Mesh.cpp">
+    <ClCompile Include="src\OpenGL\Meshes\PointCloud\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Shader.cpp">
+    <ClCompile Include="src\OpenGL\Shaders\Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Camera.cpp">
+    <ClCompile Include="src\OpenGL\Camera\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\ALB.h">
+    <ClInclude Include="src\AudioLoopBack\ALB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\miniaudio.h">
+    <ClInclude Include="src\AudioLoopBack\miniaudio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\App.h">
+    <ClInclude Include="src\App\App.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui_impl_glfw.h">
+    <ClInclude Include="src\OpenGL\Imgui\imgui_impl_glfw.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui_impl_opengl3.h">
+    <ClInclude Include="src\OpenGL\Imgui\imgui_impl_opengl3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui_impl_opengl3_loader.h">
+    <ClInclude Include="src\OpenGL\Imgui\imgui_impl_opengl3_loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Octave.h">
+    <ClInclude Include="src\BandAnalyzers\Octave\Octave.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Mesh.h">
+    <ClInclude Include="src\OpenGL\Meshes\PointCloud\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Shader.h">
+    <ClInclude Include="src\OpenGL\Shaders\Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Camera.h">
+    <ClInclude Include="src\OpenGL\Camera\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="README.md" />
-    <None Include="src\shaders\Mesh.vert" />
-    <None Include="src\shaders\Mesh.frag" />
+    <None Include="src\OpenGL\Meshes\PointCloud\Mesh.vert" />
+    <None Include="src\OpenGL\Meshes\PointCloud\Mesh.frag" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE.txt" />
